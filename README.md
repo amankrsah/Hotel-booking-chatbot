@@ -1,4 +1,4 @@
-# 🤖 SecureStay: AI-Powered Hotel Booking Chatbot & Virtual Concierge
+# 🤖 Barnawapara Hotel Booking chatbot : AI-Powered Hotel Booking Chatbot & Virtual Assistant
 
 An enterprise-grade, conversational AI assistant and virtual concierge engineered to automate the hospitality reservation ecosystem. It implements a **hybrid data validation architecture** combining real-time **Semantic Vector Search (ChromaDB)** and a **Persistent Transaction Engine (SQLite)** to eliminate rigid booking forms entirely while maintaining strict ACID data integrity.
 
