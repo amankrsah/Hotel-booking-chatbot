@@ -1,0 +1,7 @@
+booking_id,guest_name,room_number,room_type,check_in,check_out,status
+3001,Amit Kumar,101,Heritage Premium Unit,01-04-2026,03-04-2026,Booked
+3002,Sneha Verma,102,Machan (AC Double),02-04-2026,05-04-2026,Booked
+3003,,103,Heritage Premium Unit,,,Vacant
+3004,Rahul Singh,104,8AB Family Unit,10-04-2026,12-04-2026,Booked
+3005,,105,Dormitory Bed,,,Vacant
+3006,Priya Gupta,106,N-Series (Non-AC Double),15-04-2026,17-04-2026,Booked

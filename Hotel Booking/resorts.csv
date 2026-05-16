@@ -1,0 +1,7 @@
+id,hotel_name,room_type,price,capacity,amenities,rating
+BWS_001,The Sal Forest Lodge,Standard Room,4500,2,"Safari, Restaurant",4.8
+BWS_001,The Sal Forest Lodge,Deluxe Cottage,6500,3,"Safari, Restaurant",4.8
+BWS_002,Barnawapara Heritage Retreat,Heritage Premium Unit,9000,2,"Pool, Wi-Fi",4.6
+BWS_002,Barnawapara Heritage Retreat,Family Unit,12000,4,"Pool, Wi-Fi",4.6
+BWS_003,Canopy Eco-Resort,Machan (AC Double),3500,2,Nature Walks,4.3
+BWS_003,Canopy Eco-Resort,N-Series (Non-AC),2500,2,Nature Walks,4.3

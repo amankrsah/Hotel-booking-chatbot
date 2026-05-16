@@ -1,0 +1,32 @@
+[
+  {
+    "booking_id": 3001,
+    "guest_name": "Amit Kumar",
+    "hotel_name": "The Sal Forest Lodge",
+    "room_type": "Standard Room",
+    "check_in": "2026-04-01",
+    "check_out": "2026-04-03",
+    "status": "Booked",
+    "timestamp": "2026-03-10T10:00:00"
+  },
+  {
+    "booking_id": 3002,
+    "guest_name": "Sneha Verma",
+    "hotel_name": "Barnawapara Heritage Retreat",
+    "room_type": "Family Unit",
+    "check_in": "2026-04-02",
+    "check_out": "2026-04-05",
+    "status": "Booked",
+    "timestamp": "2026-03-11T14:30:00"
+  },
+  {
+    "booking_id": 3003,
+    "guest_name": "Vacant",
+    "hotel_name": "Government Forest Guest House",
+    "room_type": "Machan (A.C.)",
+    "check_in": null,
+    "check_out": null,
+    "status": "Vacant",
+    "timestamp": null
+  }
+]

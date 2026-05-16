@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barnawapara Booking Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Agent UI Formatting */
+        .agent-reply h3 { font-weight: 800; color: #064e3b; margin-top: 0.5rem; font-size: 1.1rem; display: block; }
+        .agent-reply hr { border: 0; border-top: 1px solid #e2e8f0; margin: 0.75rem 0; width: 100%; }
+        .agent-reply ul { list-style-type: disc; margin-left: 1.25rem; margin-top: 0.25rem; }
+        .agent-reply strong { color: #065f46; font-weight: 700; }
+
+        .typing-dot {
+            width: 6px; height: 6px; background: #94a3b8; border-radius: 50%;
+            display: inline-block; animation: typing 1.4s infinite both;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <div class="bg-white p-6 rounded-3xl shadow-xl w-full max-w-3xl border border-slate-200">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h1 class="text-2xl font-bold text-emerald-900 flex items-center">🌿 Barnawapara Booking Assistant</h1>
+            <span id="speakingIcon" class="hidden text-xs font-bold text-blue-500 animate-pulse bg-blue-50 px-3 py-1 rounded-full border border-blue-100">🔊 AGENT SPEAKING...</span>
+        </div>
+        
+        <div id="chat-box" class="h-[500px] overflow-y-auto mb-6 p-4 space-y-4 bg-slate-50 rounded-2xl shadow-inner scrollbar-hide">
+            <div class="text-left">
+                <span class="inline-block p-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-sm shadow-sm">
+                    Welcome! I can help you explore the sanctuary resorts. Try saying <strong>"Show me available resorts"</strong>.
+                </span>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex space-x-2">
+                <input id="user-input" type="text" placeholder="Type your query..." class="flex-1 border border-slate-200 p-3 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm">
+                <button onclick="sendText()" class="bg-emerald-600 text-white px-6 py-2 rounded-2xl hover:bg-emerald-700 transition-all font-bold shadow-md shadow-emerald-100">Send</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="mic-btn" onclick="toggleRecording()" class="flex items-center justify-center space-x-2 bg-rose-500 text-white p-3 rounded-2xl hover:bg-rose-600 transition-all shadow-md shadow-rose-100 font-bold">
+                    <span id="mic-icon">🎤</span> <span id="mic-text">Start Mic</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder, audioChunks = [], isRecording = false;
+        let activeResortData = null; 
+        
+        // Comprehensive Booking State Object (Added GST & Total Amount)
+        let bookingFlow = {
+            hotelName: null, roomType: null, basePrice: 0, capacity: 2, 
+            numberOfRooms: 1, finalPrice: 0, gstAmount: 0, totalAmount: 0,
+            checkIn: null, checkOut: null, numberOfNights: 1,
+            adults: 1, children: 0,
+            guestName: "", email: "", phone: "",
+            unavailableDates: []
+        };
+
+        function formatAgentText(text) {
+            if (!text || text === "undefined") return "Processing your request...";
+            return text.replace(/### (.*?)(?:\n|$)/g, '<h3>$1</h3>') 
+                       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                       .replace(/---/g, '<hr>')
+                       .replace(/^\* (.*?)(?:\n|$)/gm, '<li>$1</li>') 
+                       .replace(/\n/g, '<br>');
+        }
+
+        function showTyping() {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.id = 'typing-indicator';
+            div.className = 'text-left';
+            div.innerHTML = `<span class="inline-block p-3 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                                <div class="typing-dot"></div> <div class="typing-dot"></div> <div class="typing-dot"></div>
+                             </span>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function hideTyping() {
+            const ind = document.getElementById('typing-indicator');
+            if (ind) ind.remove();
+        }
+
+        async function sendText() {
+            const input = document.getElementById('user-input');
+            const text = input.value;
+            if (!text) return;
+            addMessage('User', text);
+            input.value = '';
+            showTyping();
+            try {
+                const res = await fetch('/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_input: text }) });
+                const data = await res.json();
+                hideTyping();
+                handleAgentResponse(data);
+            } catch (err) { hideTyping(); addMessage('Agent', 'Connection failed.'); }
+        }
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = uploadVoice;
+                audioChunks = [];
+                mediaRecorder.start();
+                document.getElementById('mic-text').innerText = "Stop";
+                document.getElementById('mic-icon').innerText = "🛑";
+                isRecording = true;
+            } else {
+                mediaRecorder.stop();
+                document.getElementById('mic-text').innerText = "Start Mic";
+                document.getElementById('mic-icon').innerText = "🎤";
+                isRecording = false;
+            }
+        }
+
+        async function uploadVoice() {
+            const formData = new FormData();
+            formData.append('file', new Blob(audioChunks, { type: 'audio/wav' }));
+            addMessage('User', '🎤 (Voice Message)');
+            showTyping();
+            try {
+                const res = await fetch('/voice-chat', { method: 'POST', body: formData });
+                hideTyping();
+                const agentHeader = res.headers.get('x-agent-reply');
+                try { handleAgentResponse(JSON.parse(agentHeader)); } catch(e) { handleAgentResponse({ reply: agentHeader }); }
+                const audio = new Audio(URL.createObjectURL(await res.blob()));
+                document.getElementById('speakingIcon').classList.remove('hidden');
+                audio.onended = () => document.getElementById('speakingIcon').classList.add('hidden');
+                audio.play();
+            } catch (err) { hideTyping(); }
+        }
+
+        function handleAgentResponse(data) {
+            const replyText = data.reply || (typeof data === 'string' ? data : "");
+            if (replyText) addMessage('Agent', replyText);
+
+            if (data.intent === 'DISCOVERY' && data.data && data.data.length > 0) {
+                localStorage.setItem('last_resort_list', JSON.stringify(data.data));
+                renderCards(data.data);
+            }
+        }
+
+        function addInteractiveWidget(htmlContent) {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = 'text-left w-full my-3 flex justify-start';
+            div.innerHTML = `<div class="inline-block p-4 rounded-2xl bg-white border border-slate-200 shadow-md w-full max-w-[90%] md:max-w-[85%] agent-reply">${htmlContent}</div>`;
+            box.appendChild(div);
+            box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+        }
+
+        function renderCards(resorts) {
+            const box = document.getElementById('chat-box');
+            const container = document.createElement('div');
+            container.className = "flex overflow-x-auto gap-4 py-4 scrollbar-hide w-full";
+            
+            resorts.forEach(resort => {
+                const card = document.createElement('div');
+                card.className = "min-w-[280px] max-w-[280px] bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden flex flex-col";
+                
+                const descHtml = resort.description 
+                    ? `<p class="text-[11px] text-slate-600 mb-3 line-clamp-2">${resort.description}</p>` 
+                    : '';
+                
+                let amenitiesHtml = '';
+                if (resort.amenities && resort.amenities.length > 0) {
+                    const topAmenities = resort.amenities.slice(0, 3);
+                    const tags = topAmenities.map(a => `<span class="text-[9px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-100 whitespace-nowrap">${a}</span>`).join('');
+                    const extra = resort.amenities.length > 3 ? `<span class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 whitespace-nowrap">+${resort.amenities.length - 3}</span>` : '';
+                    amenitiesHtml = `<div class="flex flex-wrap gap-1 mb-3">${tags}${extra}</div>`;
+                }
+
+                card.innerHTML = `
+                    <img src="${resort.image_url}" class="h-32 w-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=500&auto=format&fit=crop'">
+                    <div class="p-4 flex flex-col flex-1">
+                        <h4 class="font-bold text-emerald-900 leading-tight">${resort.hotel_name}</h4>
+                        <p class="text-[10px] text-slate-500 mb-2 mt-1 font-semibold">📍 ${resort.location}</p>
+                        ${descHtml}
+                        ${amenitiesHtml}
+                        <div class="mt-auto">
+                            <button onclick="selectResort('${resort.hotel_name}')" class="w-full bg-emerald-600 text-white text-xs py-2 rounded-xl font-bold hover:bg-emerald-700 transition-colors">Explore Rooms</button>
+                        </div>
+                    </div>`;
+                container.appendChild(card);
+            });
+            box.appendChild(container);
+            box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+        }
+
+        window.selectResort = function(resortName) {
+            addMessage('User', `I'd like to see rooms at ${resortName}`);
+            const resorts = JSON.parse(localStorage.getItem('last_resort_list'));
+            const resort = resorts.find(r => r.hotel_name === resortName);
+            bookingFlow.hotelName = resort.hotel_name;
+
+            let html = `<h4 class="font-bold text-emerald-900 mb-3 border-b pb-2">Available Rooms at ${resortName}</h4><div class="flex flex-col gap-3">`;
+            resort.room_types.forEach((room, index) => {
+                
+                let img = room.image_url || "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=500&auto=format&fit=crop";
+                let cap = room.capacity || 2; 
+                
+                let roomDescHtml = room.description 
+                    ? `<p class="text-[11px] text-slate-500 italic mt-1.5 leading-snug">${room.description}</p>`
+                    : '';
+                
+                html += `
+                    <div class="flex items-start gap-3 border p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 cursor-pointer transition-colors" onclick="askGuests('${room.type}', ${room.price}, ${cap})">
+                        <img src="${img}" class="w-20 h-20 rounded-lg object-cover flex-shrink-0 mt-1" onerror="this.src='https://images.unsplash.com/photo-1590490360182-c33d57733427?w=200&h=200&fit=crop'">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-sm text-slate-800">${room.type}</p>
+                                    <p class="text-[10px] text-slate-500 font-semibold uppercase mt-0.5">Capacity: ${cap} Adults</p>
+                                </div>
+                                <p class="text-xs text-emerald-700 font-extrabold bg-emerald-100 px-2 py-1 rounded-md">₹${room.price}</p>
+                            </div>
+                            ${roomDescHtml}
+                            <div class="mt-2 text-right">
+                                <button class="bg-emerald-600 text-white text-[10px] px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-emerald-700">Select</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            html += `</div>`;
+            setTimeout(() => addInteractiveWidget(html), 500);
+        }
+
+        window.askGuests = function(roomType, basePrice, capacity) {
+            bookingFlow.roomType = roomType;
+            bookingFlow.basePrice = basePrice;
+            bookingFlow.capacity = capacity;
+            bookingFlow.adults = 1;
+            bookingFlow.children = 0;
+
+            addMessage('User', `I select the ${roomType}.`);
+
+            let html = `
+                <h4 class="font-bold text-emerald-900 mb-3 border-b pb-2">Number of Guests</h4>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border">
+                        <span class="text-sm font-bold text-slate-700">Adults</span>
+                        <div class="flex items-center gap-3">
+                            <button onclick="updateGuestCount('adults', -1)" class="bg-slate-200 px-3 py-1 rounded text-lg leading-none font-bold">-</button>
+                            <span id="adult-count" class="font-bold w-4 text-center">1</span>
+                            <button onclick="updateGuestCount('adults', 1)" class="bg-emerald-200 text-emerald-800 px-3 py-1 rounded text-lg leading-none font-bold">+</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border">
+                        <span class="text-sm font-bold text-slate-700">Children</span>
+                        <div class="flex items-center gap-3">
+                            <button onclick="updateGuestCount('children', -1)" class="bg-slate-200 px-3 py-1 rounded text-lg leading-none font-bold">-</button>
+                            <span id="child-count" class="font-bold w-4 text-center">0</span>
+                            <button onclick="updateGuestCount('children', 1)" class="bg-emerald-200 text-emerald-800 px-3 py-1 rounded text-lg leading-none font-bold">+</button>
+                        </div>
+                    </div>
+                    <button onclick="suggestRooms()" class="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-bold shadow-md">Calculate Rooms</button>
+                </div>`;
+            setTimeout(() => addInteractiveWidget(html), 500);
+        }
+
+        window.updateGuestCount = function(type, change) {
+            if (type === 'adults') {
+                bookingFlow.adults = Math.max(1, bookingFlow.adults + change);
+                document.getElementById('adult-count').innerText = bookingFlow.adults;
+            } else {
+                bookingFlow.children = Math.max(0, bookingFlow.children + change);
+                document.getElementById('child-count').innerText = bookingFlow.children;
+            }
+        }
+
+        window.suggestRooms = function() {
+            addMessage('User', `Guests: ${bookingFlow.adults} Adults, ${bookingFlow.children} Children.`);
+            
+            const adults = bookingFlow.adults;
+            const cap = bookingFlow.capacity;
+            let minRooms = Math.ceil(adults / cap);
+            bookingFlow.numberOfRooms = minRooms;
+
+            let comboExplanation = minRooms > 1 
+                ? `You have ${adults} adults. Since the ${bookingFlow.roomType} has a maximum capacity of ${cap}, you will need at least ${minRooms} rooms.`
+                : `You have ${adults} adults. This fits perfectly in 1 ${bookingFlow.roomType} (Capacity: ${cap}).`;
+
+            let html = `
+                <h4 class="font-bold text-emerald-900 mb-3 border-b pb-2">Room Configuration</h4>
+                <p class="text-xs text-slate-700 mb-4 bg-emerald-50 p-3 rounded-lg border border-emerald-100 leading-relaxed">${comboExplanation}</p>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border">
+                        <span class="text-sm font-bold text-slate-700">Rooms Required</span>
+                        <div class="flex items-center gap-3">
+                            <button onclick="updateRoomCount(-1, ${minRooms})" class="bg-slate-200 px-3 py-1 rounded text-lg leading-none font-bold">-</button>
+                            <span id="room-count" class="font-bold w-4 text-center">${minRooms}</span>
+                            <button onclick="updateRoomCount(1, ${minRooms})" class="bg-emerald-200 text-emerald-800 px-3 py-1 rounded text-lg leading-none font-bold">+</button>
+                        </div>
+                    </div>
+                    <p class="text-sm font-bold text-emerald-900 text-right mt-1">Per Night: ₹<span id="room-total-nightly">${minRooms * bookingFlow.basePrice}</span></p>
+                    <button onclick="proceedToDates()" class="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-bold shadow-md mt-2">Select Dates</button>
+                </div>`;
+            setTimeout(() => addInteractiveWidget(html), 500);
+        }
+
+        window.updateRoomCount = function(change, minRooms) {
+            bookingFlow.numberOfRooms = Math.max(minRooms, bookingFlow.numberOfRooms + change);
+            document.getElementById('room-count').innerText = bookingFlow.numberOfRooms;
+            document.getElementById('room-total-nightly').innerText = bookingFlow.numberOfRooms * bookingFlow.basePrice;
+        }
+
+        window.proceedToDates = async function() {
+            addMessage('User', `I need ${bookingFlow.numberOfRooms} room(s).`);
+            showTyping();
+
+            const res = await fetch('/get-booked-dates', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ hotel_name: bookingFlow.hotelName, room_type: bookingFlow.roomType })
+            });
+            const data = await res.json();
+            bookingFlow.unavailableDates = data.booked_dates;
+            hideTyping();
+
+            const today = new Date().toISOString().split('T')[0];
+            let html = `
+                <h4 class="font-bold text-emerald-900 mb-3 border-b pb-2">Select Dates</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Check-in</label>
+                        <input type="date" id="widget-cin" min="${today}" onchange="validateDates()" class="w-full border p-2 rounded-lg text-sm outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Check-out</label>
+                        <input type="date" id="widget-cout" min="${today}" onchange="validateDates()" class="w-full border p-2 rounded-lg text-sm outline-none focus:border-emerald-500">
+                    </div>
+                    <p id="date-err" class="text-[10px] text-rose-500 font-bold hidden bg-rose-50 p-2 rounded"></p>
+                    <button onclick="confirmDatesAndContact()" class="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-bold shadow-md">Continue</button>
+                </div>`;
+            addInteractiveWidget(html);
+        }
+
+        window.validateDates = function() {
+            const cin = document.getElementById('widget-cin').value;
+            const cout = document.getElementById('widget-cout').value;
+            const err = document.getElementById('date-err');
+            
+            if (cin && cout && cin >= cout) {
+                err.innerText = "Check-out must be after check-in."; err.classList.remove('hidden'); return false;
+            }
+            if (cin && cout) {
+                let overlap = bookingFlow.unavailableDates.some(b => {
+                    let reqIn = new Date(cin), reqOut = new Date(cout);
+                    let existIn = new Date(b.check_in), existOut = new Date(b.check_out);
+                    return Math.max(reqIn, existIn) < Math.min(reqOut, existOut);
+                });
+                if (overlap) {
+                    err.innerText = "This room is booked on these dates. Please choose different ones.";
+                    err.classList.remove('hidden');
+                    return false;
+                }
+            }
+            err.classList.add('hidden');
+            return true;
+        }
+
+        // --- UPDATED: Calculate Dates, GST, and Total Amount ---
+        window.confirmDatesAndContact = function() {
+            const cin = document.getElementById('widget-cin').value;
+            const cout = document.getElementById('widget-cout').value;
+            if (!cin || !cout) return alert("Select both dates");
+            if (!validateDates()) return;
+            
+            bookingFlow.checkIn = cin; bookingFlow.checkOut = cout;
+            
+            const timeDiff = new Date(cout).getTime() - new Date(cin).getTime();
+            bookingFlow.numberOfNights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            // Core calculations
+            bookingFlow.finalPrice = bookingFlow.basePrice * bookingFlow.numberOfRooms * bookingFlow.numberOfNights;
+            bookingFlow.gstAmount = Math.round(bookingFlow.finalPrice * 0.18); // 18% Standard GST
+            bookingFlow.totalAmount = bookingFlow.finalPrice + bookingFlow.gstAmount;
+
+            addMessage('User', `Dates: ${cin} to ${cout} (${bookingFlow.numberOfNights} Nights).`);
+            
+            let html = `
+                <h4 class="font-bold text-emerald-900 mb-3 border-b pb-2">Guest Details</h4>
+                <div class="space-y-3">
+                    <input type="text" id="widget-name" placeholder="Full Name" class="w-full border p-2 rounded-lg text-sm outline-none focus:border-emerald-500">
+                    <input type="email" id="widget-email" placeholder="Email Address" class="w-full border p-2 rounded-lg text-sm outline-none focus:border-emerald-500">
+                    <input type="tel" id="widget-phone" placeholder="Phone Number" class="w-full border p-2 rounded-lg text-sm outline-none focus:border-emerald-500">
+                    <button onclick="confirmDetails()" class="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-bold shadow-md">Review Booking</button>
+                </div>`;
+            setTimeout(() => addInteractiveWidget(html), 500);
+        }
+
+        // --- UPDATED: Booking Summary Display with Tax Breakdown ---
+        window.confirmDetails = function() {
+            const name = document.getElementById('widget-name').value;
+            const email = document.getElementById('widget-email').value;
+            const phone = document.getElementById('widget-phone').value;
+            if (!name || !email || !phone) return alert("Please fill all details");
+
+            bookingFlow.guestName = name; bookingFlow.email = email; bookingFlow.phone = phone;
+            addMessage('User', `Contact Details confirmed.`);
+
+            let html = `
+                <h4 class="font-bold text-emerald-900 mb-3 border-b pb-2">Booking Summary</h4>
+                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100 text-xs space-y-1 mb-3 text-slate-700">
+                    <p><strong>Resort:</strong> ${bookingFlow.hotelName}</p>
+                    <p><strong>Room:</strong> ${bookingFlow.numberOfRooms}x ${bookingFlow.roomType}</p>
+                    <p><strong>Dates:</strong> ${bookingFlow.checkIn} to ${bookingFlow.checkOut} (${bookingFlow.numberOfNights} Nights)</p>
+                    <p><strong>Guests:</strong> ${bookingFlow.adults}A, ${bookingFlow.children}C</p>
+                    <p><strong>Guest Name:</strong> ${bookingFlow.guestName}</p>
+                    
+                    <hr class="border-emerald-200 my-3">
+                    
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-sm text-emerald-800">
+                            <span>Base Total:</span>
+                            <span>₹${bookingFlow.finalPrice}</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-emerald-800">
+                            <span>Taxes & GST (18%):</span>
+                            <span>₹${bookingFlow.gstAmount}</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold text-emerald-900 border-t border-emerald-200 pt-2 mt-1">
+                            <span>Grand Total:</span>
+                            <span>₹${bookingFlow.totalAmount}</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="payNow()" class="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-bold shadow-md flex justify-center items-center gap-2 hover:bg-blue-700">
+                    💳 Pay ₹${bookingFlow.totalAmount} Securely
+                </button>`;
+            setTimeout(() => addInteractiveWidget(html), 500);
+        }
+
+        // --- UPDATED: Send the correct totalAmount to Razorpay ---
+        window.payNow = async function() {
+            const res = await fetch('/create-payment-order', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ booking_id: 1001, amount: bookingFlow.totalAmount }) // Uses the new Grand Total
+            });
+            const order = await res.json();
+            const options = {
+                "key": order.key_id, "amount": order.amount * 100, "currency": "INR",
+                "name": "Barnawapara Wildlife", "order_id": order.order_id,
+                "handler": async function (response){
+                    const confirmRes = await fetch('/verify-and-confirm', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            booking_id: order.order_id.substring(6,12), 
+                            guest_name: bookingFlow.guestName, email: bookingFlow.email,
+                            phone: bookingFlow.phone, adults: bookingFlow.adults, children: bookingFlow.children,
+                            razorpay_payment_id: response.razorpay_payment_id, razorpay_order_id: response.razorpay_order_id,
+                            check_in: bookingFlow.checkIn, check_out: bookingFlow.checkOut,
+                            hotel_name: bookingFlow.hotelName, room_type: bookingFlow.roomType
+                        })
+                    });
+                    const final = await confirmRes.json();
+                    if (final.status === "confirmed") {
+                        let successHtml = `
+                            <div class="text-center">
+                                <span class="text-4xl">✅</span>
+                                <h3 class="font-bold text-emerald-900 mt-2">Booking Confirmed!</h3>
+                                <p class="text-xs text-slate-600 mt-1">Ref ID: <strong>${response.razorpay_payment_id}</strong></p>
+                                <p class="text-xs text-slate-600 mt-2">Thank you, ${bookingFlow.guestName}. Your details have been sent to ${bookingFlow.email}.</p>
+                            </div>
+                        `;
+                        addInteractiveWidget(successHtml);
+                    }
+                },
+                "theme": { "color": "#059669" }
+            };
+            new Razorpay(options).open();
+        }
+
+        function addMessage(sender, text) {
+            const box = document.getElementById('chat-box');
+            if (!box || !text || text === "undefined") return;
+            const div = document.createElement('div');
+            div.className = sender === 'User' ? 'text-right' : 'text-left';
+            const bgColor = sender === 'User' ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-200 text-slate-800 shadow-sm agent-reply';
+            const content = sender === 'Agent' ? formatAgentText(text) : text;
+            div.innerHTML = `<span class="inline-block p-3 rounded-2xl ${bgColor} text-sm max-w-[85%]"><strong>${sender}:</strong> ${content}</span>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html>

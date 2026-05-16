@@ -1,0 +1,158 @@
+[
+  {
+    "id": "BWS_DEV_001",
+    "hotel_name": "DevHills Resort",
+    "location": "Pakrid Gate - Achanakpur (Near Kasdol)",
+    "image_url": "https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=1000&auto=format&fit=crop",
+    "description": "A vibrant and scenic resort near the Pakrid Gate, featuring beautifully painted traditional cottages and modern amenities.",
+    "amenities": ["Canteen", "Breakfast Included", "Attached Toilet", "Parking"],
+    "rating": 4.5,
+    "room_types": [
+      {
+        "type": "Cottages",
+        "price": 10500,
+        "capacity": 2,
+        "description": "Dual occupancy, non AC room with breakfast, Attached Toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/cottage.jpg"
+      }
+    ],
+    "contact_email": "booking@devhillsresort.in"
+  },
+  {
+    "id": "BWS_PARYATAK_001",
+    "hotel_name": "Paryatak Gram Resort",
+    "location": "Bar Village - Ravan Gate - Patewa",
+    "image_url": "https://images.unsplash.com/photo-1590447158019-883d8d5f8bc7?q=80&w=1000&auto=format&fit=crop",
+    "description": "A highly versatile sanctuary resort offering a wide range of accommodations, from luxury AC rooms and heritage cottages to budget-friendly dormitories.",
+    "amenities": ["Canteen", "Common Drawing Room", "Attached Toilets", "Forest Views"],
+    "rating": 4.2,
+    "room_types": [
+      {
+        "type": "Heritage Cottage",
+        "price": 6000,
+        "capacity": 4,
+        "description": "2 Dual occupancy, non AC bedrooms, radios, dining, drawing room, kitchen, courtyard, lane and driver room and 1 cook room",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/heritage.jpeg?s"
+      },
+      {
+        "type": "Oakleaf Luxury",
+        "price": 3000,
+        "capacity": 2,
+        "description": "Dual occupancy room AC rooms, Attached toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/machaan.jpeg"
+      },
+      {
+        "type": "Hawk Luxury",
+        "price": 2500,
+        "capacity": 2,
+        "description": "Dual occupancy, non AC room, Attached toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/nseries.jpg"
+      },
+      {
+        "type": "Hornbill Super Deluxe",
+        "price": 2000,
+        "capacity": 2,
+        "description": "Dual occupancy, non AC room with common drawing room, Attached toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/7ab.jpg"
+      },
+      {
+        "type": "Falcon Super Deluxe",
+        "price": 2000,
+        "capacity": 2,
+        "description": "Dual occupancy, non AC room with common drawing room, Attached toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/8ab.jpg"
+      },
+      {
+        "type": "Osprey Deluxe (dorm)",
+        "price": 1500,
+        "capacity": 2,
+        "description": "Dual occupancy, Non AC room, Attached toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/barsafari.jpeg"
+      },
+      {
+        "type": "Luna Moth Deluxe",
+        "price": 1000,
+        "capacity": 2,
+        "description": "Dual occupancy room, Attached toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/6ab.jpeg"
+      },
+      {
+        "type": "Blackbuck Deluxe",
+        "price": 800,
+        "capacity": 2,
+        "description": "Dual occupancy room, Attached toilet",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/6ab.jpeg"
+      },
+      {
+        "type": "Flock (dorm)",
+        "price": 250,
+        "capacity": 1,
+        "description": "8 Bed shared room space, Attached toilet (Price listed is per bed)",
+        "image_url": "https://stays.bwsanctuary.com/imgs/2/6ab.jpeg"
+      }
+    ],
+    "contact_email": "reservations@paryatakgram.com"
+  },
+  {
+    "id": "BWS_001",
+    "hotel_name": "The Sal Forest Lodge",
+    "location": "Core Zone, Barnawapara",
+    "image_url": "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?q=80&w=1000&auto=format&fit=crop",
+    "description": "An eco-conscious lodge set within the heart of the Sal forests, perfect for wildlife enthusiasts.",
+    "amenities": ["Guided Jungle Safari", "Bird Watching Tours", "Multi-Cuisine Restaurant", "Power Backup"],
+    "rating": 4.8,
+    "room_types": [
+      {"type": "Standard Room", "price": 4500, "capacity": 2, "image_url": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=500&auto=format&fit=crop"},
+      {"type": "Deluxe Cottage", "price": 6500, "capacity": 3, "image_url": "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=500&auto=format&fit=crop"}
+    ],
+    "contact_email": "booking@salforestlodge.in"
+  },
+  {
+    "id": "BWS_002",
+    "hotel_name": "Barnawapara Heritage Retreat",
+    "location": "Buffer Zone, Sanctuary Gate",
+    "image_url": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1000&auto=format&fit=crop",
+    "description": "A restored colonial-era retreat offering premium luxury with views of the grasslands.",
+    "amenities": ["Swimming Pool", "Wi-Fi", "Library", "Conference Hall", "Pick-up Service"],
+    "rating": 4.6,
+    "room_types": [
+      {"type": "Heritage Premium Unit", "price": 9000, "capacity": 2, "image_url": "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=500&auto=format&fit=crop"},
+      {"type": "Family Unit", "price": 12000, "capacity": 4, "image_url": "https://images.unsplash.com/photo-1582719478250-c89404bb8a0e?w=500&auto=format&fit=crop"}
+    ],
+    "contact_email": "stay@heritage-retreat.com"
+  },
+  {
+    "id": "BWS_003",
+    "hotel_name": "Canopy Eco-Resort",
+    "location": "Near Ravan Barrier",
+    "image_url": "https://forest.cg.gov.in/barnawapara/img/Machan/M3.jpg",
+    "description": "Sustainable eco-resort focused on low-impact tourism and immersive forest experiences.",
+    "amenities": ["Guided Nature Walks", "Bonfire Area", "Organic Dining", "Parking"],
+    "rating": 4.3,
+    "room_types": [
+      {"type": "Machan (AC Double)", "price": 3500, "capacity": 2, "image_url": "https://forest.cg.gov.in/barnawapara/img/Machan/M4.jpg"},
+      {"type": "N-Series (Non-AC)", "price": 2500, "capacity": 2, "image_url": "https://forest.cg.gov.in/barnawapara/img/N_Series/N2.jpg"}
+    ],
+    "contact_email": "info@canopy-eco.com"
+  },
+  {
+    "id": "BWS_GOVT_001",
+    "hotel_name": "Government Forest Guest House",
+    "location": "Central Zone, Barnawapara",
+    "image_url": "https://forest.cg.gov.in/barnawapara/img/7n8AB/N2.jpg",
+    "description": "Official government-run sanctuary stay offering diverse budget-friendly options ranging from Heritage units to Dormitories.",
+    "amenities": ["On-site Canteen", "Jungle View", "Guide Assistance", "Govt. Security"],
+    "rating": 4.0,
+    "room_types": [
+      {"type": "Heritage (2-Bedroom Suite)", "price": 6000, "capacity": 4, "description": "Includes 1 dining room, 1 drying room, kitchen, courtyard, and cook.", "image_url": "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=500&auto=format&fit=crop"},
+      {"type": "Machan (A.C.)", "price": 3000, "capacity": 2, "description": "Elevated forest view rooms with AC.", "image_url": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=500&auto=format&fit=crop"},
+      {"type": "N Series (Non-A.C.)", "price": 2500, "capacity": 2, "description": "Comfortable non-AC double bed rooms.", "image_url": "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=500&auto=format&fit=crop"},
+      {"type": "7AB/8AB Suite", "price": 2000, "capacity": 4, "description": "2 Bedrooms and 1 Drawing room unit.", "image_url": "https://forest.cg.gov.in/barnawapara/img/7n8AB/N3.jpg"},
+      {"type": "Dormitory (8-Bed)", "price": 2000, "capacity": 8, "description": "Group stay, 250 per bed.", "image_url": "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=500&auto=format&fit=crop"},
+      {"type": "Bar Safari Double Bed", "price": 1500, "capacity": 2, "description": "Standard non-AC double bed.", "image_url": "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=500&auto=format&fit=crop"},
+      {"type": "Eco-Unit (6A/6B)", "price": 1000, "capacity": 2, "description": "Basic non-AC accommodation.", "image_url": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=500&auto=format&fit=crop"},
+      {"type": "Budget Unit (2 A/B/C)", "price": 800, "capacity": 2, "description": "Affordable entry-level rooms.", "image_url": "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=500&auto=format&fit=crop"}
+    ],
+    "contact_email": "forest.resort@cgstate.gov.in"
+  }
+]

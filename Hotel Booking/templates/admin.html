@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Barnawapara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
+
+    <nav class="bg-emerald-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🌿</span>
+                    <span class="font-bold text-lg tracking-wide">Barnawapara Admin</span>
+                </div>
+                <div class="flex items-center gap-5">
+                    <a href="/static/index.html" class="text-emerald-200 hover:text-white text-sm font-semibold transition-colors">Live Chatbot &rarr;</a>
+                    <button onclick="logout()" class="bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold py-1.5 px-4 rounded border border-emerald-700 shadow-sm transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-900">Booking Management</h1>
+                <p class="text-sm text-slate-500 mt-1">Live view of all SQL database transactions.</p>
+            </div>
+            <button onclick="fetchBookings()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition flex items-center gap-2">
+                <span>🔄</span> Refresh Data
+            </button>
+        </div>
+
+        <div class="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Booking Ref</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Guest Details</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Resort & Room</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Dates</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="bg-white divide-y divide-slate-200">
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-slate-500 text-sm">
+                                Loading secure database records...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- LOGOUT LOGIC FOR BASIC AUTH ---
+        function logout() {
+            // Force the browser to overwrite the saved Basic Auth credentials with fake ones
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", "/admin", true, "logout", "logout");
+            xhr.send();
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    // Redirect back to the public chatbot page once the cache is cleared
+                    window.location.href = "/static/index.html";
+                }
+            }
+        }
+
+        // Format the ISO timestamp into a readable date
+        function formatDate(isoString) {
+            if (!isoString) return 'N/A';
+            const date = new Date(isoString);
+            return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function fetchBookings() {
+            const tbody = document.getElementById('table-body');
+            try {
+                const response = await fetch('/api/bookings');
+                
+                // If the user isn't authenticated, the API will return a 401
+                if (response.status === 401) {
+                    window.location.reload();
+                    return;
+                }
+
+                const bookings = await response.json();
+                tbody.innerHTML = ''; // Clear loading message
+
+                if (bookings.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500 text-sm">No bookings found in the database yet.</td></tr>`;
+                    return;
+                }
+
+                bookings.forEach(b => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-50 transition-colors";
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">#${b.booking_id}</span>
+                            <div class="text-[10px] text-slate-400 mt-1">${formatDate(b.timestamp)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-bold text-slate-900">${b.guest_name}</div>
+                            <div class="text-xs text-slate-500">${b.email}</div>
+                            <div class="text-xs text-slate-500">${b.phone}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-bold text-emerald-800">${b.hotel_name}</div>
+                            <div class="text-xs text-slate-600 mt-0.5">${b.room_type}</div>
+                            <div class="text-[10px] font-bold text-slate-500 mt-1 bg-slate-100 inline-block px-1.5 rounded">${b.adults} Adults, ${b.children} Kids</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-slate-800 font-semibold border border-slate-200 bg-white px-2 py-1 rounded-md text-center inline-block">
+                                ${b.check_in} <span class="text-slate-400 mx-1">→</span> ${b.check_out}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800">
+                                ${b.status}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-rose-500 font-bold text-sm">Failed to connect to the database.</td></tr>`;
+            }
+        }
+
+        // Fetch data immediately when the page loads
+        document.addEventListener('DOMContentLoaded', fetchBookings);
+    </script>
+</body>
+</html>

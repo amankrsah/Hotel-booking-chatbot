@@ -1,0 +1,23 @@
+# Core AI & GPU Acceleration
+--index-url https://download.pytorch.org/whl/cu130
+torch
+torchvision
+torchaudio
+transformers
+accelerate
+
+# Web API Framework
+fastapi
+uvicorn
+pydantic
+python-multipart
+
+# Voice & Speech Processing
+openai-whisper
+gTTS
+
+# Utilities
+pandas
+datetime
+
+python-multipart is used for handling file uploads in FastAPI, which is essential for processing voice inputs.
